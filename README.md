@@ -1,5 +1,4 @@
-The contents of this repository allow the reproducibility of the analysis carried out in the MS 
-Navigating complexity: channel selection of Atlantic salmon smolts through an island network during their migration to the marine environment
+The contents of this repository allow the reproducibility of the analysis carried out in the MS *Navigating complexity: channel selection of Atlantic salmon smolts through an island network during their migration to the marine environment*
 
 
 2022_smolt_project.Rproj is the R project file
