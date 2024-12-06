@@ -1,0 +1,489 @@
+##~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+## Generating the network for 2022 experiment
+##
+## Source of inspiration
+## Ognyanova, K. (2023) Network visualization with R. Retrieved from www.kateto.net/network-visualization.
+##
+##
+##
+
+# install.packages("igraph") 
+# install.packages("network") 
+# install.packages("sna")
+# install.packages("ggraph")
+# install.packages("visNetwork")
+# install.packages("threejs")
+# install.packages("networkD3")
+# install.packages("ndtv")
+# install.packages("ggalluvial")
+
+
+library(igraph)
+library(network)
+library(sna)
+library(ggraph)
+library(visNetwork)
+library(threejs)
+library(networkD3)
+library(ndtv)
+library(ggalluvial)
+
+## Creating the nodes
+
+###~~~~~~~~~~~~~~~~~~~
+### Network graph ####
+
+## Create labels using bquote
+labels_bq <- c(bquote(X0),bquote(X["1,1"]),bquote(X["1,2"]),
+             bquote(X["2,1"]),bquote(X["2,2"]),bquote(X["2,3"]),
+             bquote(X["3,1"]),bquote(X["3,2"]),bquote(X["3,3"]),bquote(X["3,4"]),
+             bquote(X["4,1"]),bquote(X["4,2"]),bquote(X["4,3"]),
+             bquote(X["5,1"]),bquote(X["5,2"]))
+
+Nodes <- data.frame(
+          ID = c(#"RP1","MM12",
+                 "Z0","Z1_1","Z1_2","Z2_1","Z2_2","Z2_3","Z3_1","Z3_2","Z3_3","Z3_4","Z4_1","Z4_2","Z4_3","Z5_1","Z5_2"),
+          Zone = c(#NA,NA,
+                   "Z0","Z1","Z1","Z2","Z2","Z2","Z3","Z3","Z3","Z3","Z4","Z4","Z4","Z5","Z5"),
+          # coerce to a character representation for parse=TRUE to work within 
+          # geom_node_text
+          Labels_exp = sapply(labels_bq,deparse),
+          col_I = c(1,2,2,3,3,3,4,4,4,4,5,5,5,6,6)
+)
+## Creating the links
+
+# weights extracted from probability of travel (5_figures_MS.R)
+# p_travel_sum
+
+
+## We calculate the actual probability distribution of all channels 
+
+attach.jags(jags_M_5)
+
+p1_mcmc <- p_Z1a
+p2_mcmc <- (1 - p_Z1a)
+
+p11_mcmc <-  (p_Z1a * p_Z2a)
+p12_mcmc <- p_Z1a*(1-p_Z2a)
+p22_mcmc <- (1-p_Z1a)*(1-p_Z2b)
+p23_mcmc <- (1-p_Z1a)*p_Z2b
+
+
+px11_mcmc <- p11_mcmc
+px22_mcmc <- (p12_mcmc+p22_mcmc) * p_dodge
+px23_mcmc <- (p12_mcmc+p22_mcmc) * (1-p_dodge)
+px34_mcmc <- p23_mcmc
+
+pxx11_mcmc <- px11_mcmc
+pxx21_mcmc <- px22_mcmc
+pxx32_mcmc <- px23_mcmc
+pxx42_mcmc <- px34_mcmc *(1-p_Z3b)
+pxx43_mcmc <- px34_mcmc * p_Z3b
+
+pxxx11_mcmc <- (pxx11_mcmc + pxx21_mcmc) * (1-p_Z5b_Z4a)
+pxxx12_mcmc <- (pxx11_mcmc + pxx21_mcmc)  * p_Z5b_Z4a
+pxxx21_mcmc <- (pxx32_mcmc + pxx42_mcmc) * (1-p_Z5b_Z4ab)
+pxxx22_mcmc <- (pxx32_mcmc + pxx42_mcmc) * p_Z5b_Z4ab
+pxxx32_mcmc <- pxx43_mcmc
+
+
+
+
+par(mfrow=c(4,1))
+
+hist(p11_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(p11_mcmc),col="red",lwd=2)
+hist(p12_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(p12_mcmc),col="red",lwd=2)
+hist(p22_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(p22_mcmc),col="red",lwd=2)
+hist(p23_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(p23_mcmc),col="red",lwd=2)
+
+hist(px11_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(px11_mcmc),col="red",lwd=2)
+hist(px22_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(px22_mcmc),col="red",lwd=2)
+hist(px23_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(px23_mcmc),col="red",lwd=2)
+hist(px34_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(px34_mcmc),col="red",lwd=2)
+
+par(mfrow=c(5,1))
+hist(pxx11_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxx11_mcmc),col="red",lwd=2)
+hist(pxx21_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxx21_mcmc),col="red",lwd=2)
+hist(pxx32_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxx32_mcmc),col="red",lwd=2)
+hist(pxx42_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxx42_mcmc),col="red",lwd=2)
+hist(pxx43_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxx43_mcmc),col="red",lwd=2)
+
+hist(pxxx11_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxxx11_mcmc),col="red",lwd=2)
+hist(pxxx12_mcmc ,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxxx12_mcmc),col="red",lwd=2)
+hist(pxxx21_mcmc ,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxxx21_mcmc),col="red",lwd=2)
+hist(pxxx22_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxxx22_mcmc),col="red",lwd=2)
+hist(pxxx32_mcmc,xlim=c(0,1),breaks = 100)
+abline(v=mean(pxxx32_mcmc),col="red",lwd=2)
+
+
+## Check distributions
+
+hist(p1_mcmc,xlim=c(0,1),breaks = 100,freq=F)
+hist(p_Z2a,xlim=c(0,1),breaks = 100,freq=F)
+
+detach.jags()
+
+
+par(mfrow=c(1,2),mar=c(4,2,2,2))
+hist(px11_mcmc,xlim=c(0,1),breaks = 100,freq=F)
+abline(v=mean(px11_mcmc),col="red",lwd=2)
+points(density(rnorm(10000,mean=0.27,sd=0.14)),type="l", col="blue")
+
+
+hist(pxx43_mcmc,xlim=c(0,1),breaks = 100,freq=F)
+abline(v=mean(pxx43_mcmc),col="red",lwd=2)
+points(density(rnorm(10000,mean=0.29,sd=0.07)),type="l", col="blue")
+
+
+p_t <- read.csv("Output/M5_p_travel.csv")
+
+p_t1_1 <- round(p_t$mean[1],3)
+p_t2_1 <- round(p_t$mean[2],3)
+p_t2_3 <- round(p_t$mean[3],3)
+p_t3_2 <- round(p_t$mean[7],3)
+p_t4_3 <- round(p_t$mean[4],3)
+p_t5_2a <- round(p_t$mean[5],3)
+p_t5_2b <- round(p_t$mean[6],3)
+
+p11 <- p_t1_1*p_t2_1 
+p12 <- p_t1_1*(1-p_t2_1)
+p22 <- (1-p_t1_1)*(1-p_t2_3)
+p23 <- (1-p_t1_1)*p_t2_3
+
+px11 <- p11
+px22 <- (p12+p22) * p_t3_2
+px23 <- (p12+p22) * (1-p_t3_2)
+px34 <- p23
+
+pxx11 <- px11
+pxx21 <- px22 
+pxx32 <- px23
+pxx42 <- px34 *(1-p_t4_3)
+pxx43 <- px34 * p_t4_3
+
+pxxx11 <- (pxx11 + pxx21) * (1-p_t5_2a) 
+pxxx12 <- (pxx11 + pxx21)  * p_t5_2a 
+pxxx21 <- (pxx32 + pxx42) * (1-p_t5_2b)
+pxxx22 <- (pxx32 + pxx42) * p_t5_2b
+pxxx32 <- pxx43 
+
+
+
+
+Links <- data.frame(
+          from = c(#"RP1", "MM12",
+                   "Z0","Z0","Z1_1","Z1_1","Z1_2","Z1_2","Z2_1","Z2_2","Z2_2","Z2_3","Z3_1","Z3_2","Z3_3","Z3_4","Z3_4","Z4_1","Z4_1","Z4_2","Z4_2","Z4_3"),
+          to = c(#"MM12","Z0",
+                 "Z1_1","Z1_2","Z2_1","Z2_2","Z2_2","Z2_3","Z3_1","Z3_2","Z3_3","Z3_4","Z4_1","Z4_1","Z4_2","Z4_2","Z4_3","Z5_1","Z5_2","Z5_1","Z5_2","Z5_2"),
+          weight = c(
+            mean(p1_mcmc),mean(p2_mcmc),mean(p11_mcmc),mean(p12_mcmc),mean(p22_mcmc),mean(p23_mcmc),mean(px11_mcmc),mean(px22_mcmc),mean(px23_mcmc),mean(px34_mcmc),
+            mean(pxx11_mcmc),mean(pxx21_mcmc),mean(pxx32_mcmc),mean(pxx42_mcmc),mean(pxx43_mcmc),mean(pxxx11_mcmc),mean(pxxx12_mcmc),mean(pxxx21_mcmc),mean(pxxx22_mcmc),mean(pxxx32_mcmc)),
+            #p_t1_1,(1-p_t1_1),p11,p12,p22,p23,px11,px22,px23,px34,pxx11,pxx21,pxx32,pxx42,pxx43,pxxx11,pxxx12,pxxx21,pxxx22,pxxx32),
+          weight_sd = c(
+            sd(p1_mcmc),sd(p2_mcmc),sd(p11_mcmc),sd(p12_mcmc),sd(p22_mcmc),sd(p23_mcmc),sd(px11_mcmc),sd(px22_mcmc),sd(px23_mcmc),sd(px34_mcmc),
+            sd(pxx11_mcmc),sd(pxx21_mcmc),sd(pxx32_mcmc),sd(pxx42_mcmc),sd(pxx43_mcmc),sd(pxxx11_mcmc),sd(pxxx12_mcmc),sd(pxxx21_mcmc),sd(pxxx22_mcmc),sd(pxxx32_mcmc)),
+          col_zone = c(1,1,2,2,2,2,3,3,3,3,4,4,4,4,4,5,5,5,5,5)
+)
+
+## Creating an igraph object
+net_smolt <-  graph_from_data_frame(d=Links, vertices=Nodes, directed=T) 
+
+## to access edges:
+E(net_smolt)$weight
+
+##to access vertex info
+V(net_smolt)$Zone
+V(net_smolt)[Zone=="Z2"]
+
+##access the network matrix
+net_smolt[1,]
+net_smolt[2,]
+net_smolt[3,]
+
+
+# Get an edge list or a matrix:
+as_edgelist(net_smolt, names=T)
+as_adjacency_matrix(net_smolt, attr="weight")
+
+# Or data frames describing nodes and edges:
+ igraph::as_data_frame(net_smolt, what="edges")
+ igraph::as_data_frame(net_smolt, what="vertices")
+
+par(mfrow=c(1,2))
+plot(net_smolt)
+net_s <- igraph::simplify(net_smolt, remove.multiple = F, remove.loops = T) 
+
+plot(net_s)
+plot(net_s,edge.curved=.1)
+
+## Changing coordinates of vertex
+## layout is a matrix of coordinates 
+plot(net_s,layout=layout_randomly)
+
+l <-layout_in_circle(net_s)
+plot(net_s,layout=l)
+
+l <- layout_with_fr(net_s)
+plot(net_s,layout=l)
+
+
+layouts <- grep("^layout_", ls("package:igraph"), value=TRUE)[-1] 
+# Remove layouts that do not apply to our graph.
+layouts <- layouts[!grepl("bipartite|merge|norm|sugiyama|tree", layouts)]
+
+par(mfrow=c(5,3), mar=c(1,1,1,1))
+for (layout in layouts) {
+  print(layout)
+  l <- do.call(layout, list(net_s)) 
+  plot(net_s, edge.arrow.mode=0, layout=l, main=layout) 
+  }
+
+
+
+## We can set our own coordinates? 
+yy <-3
+cust_coord <- data.frame(
+#       Z0  Z1_1  Z1_2  Z2_1  Z2_2    Z2_3    Z3_1  Z3_2    Z3_3    Z3_4  Z4_1    Z4_2    Z4_3  Z5_1    Z5_2   
+  x = c(0,  1   , 1   , 2   , 2     , 2  ,    3   , 3     , 3     , 3   , 4     , 4     , 4  , 5    , 5  ),
+  y = c(yy, yy+1, yy-1, yy+1, yy-0.2, yy-1,   yy+1, yy-0.2, yy-0.7, yy-1, yy+0.5, yy-0.7, yy-1, yy+0.5, yy-1)
+)
+
+cust_coord_m <- as.matrix(cust_coord)
+par(mfrow=c(1,1),mar=c(0,0,0,0))
+plot(net_s,layout=cust_coord_m)
+#plot(net_s,layout=cust_coord_m*0.2,rescale=F)
+
+
+
+
+
+## Setting the width of the arrows based on weights/p_travel
+E(net_s)$width <- E(net_s)$weight*20
+plot(net_s,layout=cust_coord_m)
+
+
+ggraph(net_smolt, layout="lgl") +
+  geom_edge_fan(color="gray50", width=0.8, alpha=0.5) + 
+  geom_node_point()+#color=V(net)$color, size=8) +
+  theme_void()
+
+
+net_smolt_cust <- net_smolt
+distance_table(net_smolt, directed = TRUE)
+V(net_smolt)$col_I
+
+
+node_col <- rev(c("dodgerblue4","deepskyblue4","deepskyblue3","deepskyblue2","deepskyblue","skyblue1"))
+net_node_col <- node_col[Nodes$col_I] 
+edge_col <-  rev(c("dodgerblue4","deepskyblue4","deepskyblue3","deepskyblue2","deepskyblue","skyblue1"))
+
+
+RST_png <- readPNG("Figures/smolt_wheel.png")
+## GRaph to be merged with the map figures
+graph_plot <- ggraph(net_smolt, layout=cust_coord,circular=F) +
+
+  geom_edge_link(aes(colour = as.factor(col_zone),width=weight,label=paste0 (round(weight,2)," \u00B1 ",round(weight_sd,2)  )  ),
+                 label_size=6.5,
+                 #label_dodge = unit(7+1.2*E(net_s)$weight,"mm"),
+                 #label_dodge = unit(14*E(net_s)$weight * 0.7/E(net_s)$weight,unit ="mm"),
+                 label_dodge = unit(c(8,6,6,6,5,
+                                      5,5,8,5,6,
+                                      5,8,5,6,6,
+                                      6,6,6,6,6),unit ="mm"),
+                 label_colour = NA,
+                 ## manually inputting horizontal position of labels
+                 label_push  = unit(c(-4,-4,-4,-4,-4,
+                                      -4,2,-4,-35,-35,
+                                      -4,-4,-4,-4,-4,
+                                      -4,-4,-4,-4,-4),"mm"),
+                 angle_calc = "along",
+                 end_cap = circle(15.5, 'mm'),
+                 show.legend = F
+                 )+
+  geom_edge_link(aes(colour = as.factor(col_zone),width=0.02),
+                 
+                 #color = net_edge_col,
+                 arrow = arrow(length = unit(9.5,'mm'),
+                               type="closed"),
+                 end_cap = circle(10.5, 'mm'),
+                 show.legend = F
+  )+ 
+
+  geom_node_point(size=24,fill=net_node_col,shape=21 ,#node_col[col_I]), #
+                 show.legend = F)+
+  geom_node_text(aes(label=Labels_exp),parse=T,  colour = 'white', size=9, fontface = "bold",
+                 show.legend = FALSE) +
+
+  scale_edge_colour_manual(values = edge_col)+
+  ylim(1.5,4.2)+
+  theme_void()
+
+
+## Standalone graph to be merged with the map figures
+graph_plot_alone <- ggraph(net_s, layout=cust_coord,circular=F) +
+  
+  geom_edge_link(aes(colour = as.factor(col_zone),width=weight,label=paste0 (round(weight,2),"\u00B1",round(weight_sd,2)  )  ),
+                 label_size=5,
+                 ## Manually inputting distance above edges
+                 # label_dodge = unit(c(rep(1,20)),
+                 #                    unit ="mm"),
+                 label_dodge = unit(7*E(net_s)$weight * 0.6/E(net_s)$weight,unit ="mm"),
+                 label_colour = NA,
+                 ## manually inputting horizontal position of labels
+                 label_push  = unit(c(-4,-4,-4,-4,-4,
+                                    -4,-4,-4,-20,-20,
+                                    -4,-4,-4,-4,-4,
+                                    -4,-4,-4,-4,-4),"mm"),
+                 #label_push  = unit(-4.5,"mm"),
+                 angle_calc = "along",
+                 end_cap = circle(13.5, 'mm'),
+                 show.legend = F
+  )+
+  geom_edge_link(aes(colour = as.factor(col_zone),width=0.02),
+                 
+                 #color = net_edge_col,
+                 arrow = arrow(length = unit(9.5,'mm'),
+                               type="closed"),
+                 end_cap = circle(10.5, 'mm'),
+                 show.legend = F
+  )+ 
+  
+  geom_node_point(size=20,fill=net_node_col,shape=21 ,#node_col[col_I]), #
+                  show.legend = F)+
+  geom_node_text(aes(label=Labels_exp),parse=T,  colour = 'white', size=7, fontface = "bold",
+                 
+                 show.legend = FALSE) +
+
+  scale_edge_colour_manual(values = edge_col)+
+  ylim(1.5,4.2)+
+  annotation_raster(RST_png , ymin = yy+0.8,ymax= yy+0.9565,xmin = 2.3,xmax = 2.6) +
+  annotation_raster(RST_png , ymin = yy-1.2565,ymax= yy-1.1,xmin = 4.3,xmax = 4.6) +
+
+  theme_void()
+
+b <- ggplot_build(graph_plot_alone)
+b$layout$panel_params[[1]]$x.range
+b$layout$panel_params[[1]]$y.range
+
+ggsave("graph_plot.png",width=13,height=6.5)
+
+
+###~~~~~~~~~~~~~~~~~~~~
+### alluvial graph ####
+### 
+### Exploration but ultimately this is not what we want for this sort of data
+### https://corybrunson.github.io/ggalluvial/
+### https://cran.r-project.org/web/packages/ggalluvial/vignettes/ggalluvial.html
+
+# ##
+# pings <- read.csv("Output/summary_n_detect_array.csv") %>% select(-X)
+# pings2 <- pings %>% select(-c(FL, Weight, tot_ping)) 
+# 
+# 
+# 
+# 
+# pings2_long <- pings2 %>% pivot_longer(cols=c(RP1,all_MM,Rx1,R1a,R1b,R2a,Rx2a,Rx2b,R2b,R3a,R3b,all_rest)) %>%
+#   mutate(Zone = case_when(name=="RP1" ~ "Upstream 1",
+#                           name=="all_MM" ~ "Upstream 2",
+#                           name=="Rx1" ~ "Upstream 3",
+#                           name=="R1a"|name=="R1b" ~ "Zone 1",
+#                           name=="R2a"|name=="Rx2b" ~ "Zone 2",
+#                           name=="Rx2a" ~ "Zone 3",
+#                           name=="R2b" ~ "Zone 4",
+#                           name=="R3a"|name=="R3b" ~ "Zone 5",
+#                           name=="all_rest" ~ "Estuary"
+#                           ),
+#          Status = case_when(value >= 1 ~ "Detected",
+#                            .default = "Not detected"),
+#          value = case_when(value >= 1 ~ 1,
+#                            value == 0 ~ 0)
+#   )
+# 
+# ping_sum <-pings2_long %>% group_by(Zone,name,Status) %>% tally()
+# 
+# 
+# ggplot(as.data.frame(ping_sum),
+#        aes(axis)
+#        
+#        
+#        
+#        
+#        aes(x=Zone,stratum=name,alluvium=cohort,y=Freq)) +
+#   geom_alluvium(aes(fill = value)) +
+#   geom_stratum(width = 1/12, fill = "black", color = "grey") +
+#   geom_label(stat = "stratum", aes(label = after_stat(stratum)))
+# 
+# 
+# 
+# pings2_long %>% select(-Tags_smolts) %>% pivot_wider(id_cols= "Zone", names_from = name,values_from =Status ,values_fn = list(Status=length))
+# 
+# 
+# 
+# 
+# ping_alluvial <- pings2_long %>% count(Zone,name,value) %>% filter(value == "Detected")
+# 
+# 
+# ping_alluvial$Zone <- factor(ping_alluvial$Zone,
+#                          levels = c("Upstream 1","Upstream 2","Upstream 3",
+#                                     "Zone 1","Zone 2","Zone 3","Zone 4","Zone 5",
+#                                     "Estuary"))
+# ping_alluvial$name <- factor(ping_alluvial$name,
+#                              levels = c("RP1","all_MM","Rx1",
+#                                         "R1a","R1b",
+#                                         "R2a","Rx2b",
+#                                         "Rx2a",
+#                                         "R2b",
+#                                         "R3a","R3b",
+#                                         "all_rest"))
+# ping_alluvial <- ping_alluvial %>% rename("Freq"=n)
+# 
+# ping_alluvial<-ping_alluvial %>% mutate(cohort=row_number())
+# head(ping_alluvial)
+# 
+# 
+# 
+# is_lodes_form(ping_alluvial,key=value,value=value,id=cohort,silent=T)
+# 
+# ggplot(as.data.frame(ping_alluvial),
+#        aes(x=Zone,stratum=name,alluvium=cohort,y=Freq)) +
+#   geom_alluvium(aes(fill = value)) +
+#   geom_stratum(width = 1/12, fill = "black", color = "grey") +
+#   geom_label(stat = "stratum", aes(label = after_stat(stratum)))
+# 
+# 
+# 
+# 
+# 
+# ping_alluvial_w <- ping_alluvial %>% pivot_wider(names_from = Zone,)
+# 
+# is_alluvia_form(as.data.frame(ping_alluvial), axes = 1:3, silent = TRUE)
+# 
+# is_alluvia_form(as.data.frame(ping_alluvial_w), axes = 1:3, silent = TRUE)
+# 
+# ggplot(as.data.frame(ping_alluvial_w),
+#        aes(y = n, axis1 = 'Upstream 1', axis2 = 'Upstream 2' )) +
+#   geom_alluvium(aes(fill = n), width = 1/12) +
+#   geom_stratum(width = 1/12, fill = "black", color = "grey") +
+#   geom_label(stat = "stratum", aes(label = after_stat(stratum)))
+# 
+# 
+# 
+# 
+# pings2_long %>% pivot_wider(names_from=Zone,values_from = value2)

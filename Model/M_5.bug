@@ -1,0 +1,128 @@
+model{
+## 2023-01-22
+## Update following meeting with GMRC
+## Accounting for the correct positioning of Rx2a
+## model channel selection and detection probability at the different receivers
+## in the restigouche downstream island complex with 45 fish marked in 2022
+##
+## 
+##
+## For notation's sake the island complex is divided in 5 zones 
+## and the probabilities to chose one specific channel are labelled Zx a/b/ab 
+## Zx corresponds to the zone in which the choice occur and the letter indicates the direction
+## a = north , b = south ,ab = middle
+## a map with detailed location of channels , receivers and potential path choices is available 
+
+## D_xx is an observed binary variable, 1: the fish was detected at receiver xx, 0: the fish was not detected at receiver xx
+## Zx_c is an unobserved binary variable, 1: the fish is in channel c of zone x, 0: the fish is not in channel c of zone x
+
+
+## probability of detection of all receivers
+p_RP1 ~ dbeta(1,1) #dbeta(2,2)
+p_MM ~ dbeta(1,1) #dbeta(2,2)
+p_Rx1 ~ dbeta(1,1) #dbeta(2,2)
+p_R1a ~ dbeta(1,1) #dbeta(2,2)
+p_R1b ~ dbeta(1,1) #dbeta(2,2)
+p_R2a ~ dbeta(1,1) #dbeta(2,2)
+p_Rx2b ~ dbeta(1,1) #dbeta(2,2)
+p_Rx2a ~ dbeta(1,1) #dbeta(2,2)
+p_R2b ~ dbeta(1,1) #dbeta(2,2)
+p_R3a ~ dbeta(1,1) #dbeta(2,2)
+p_R3b ~ dbeta(1,1) #dbeta(2,2)
+p_Rest ~ dbeta(1,1) #dbeta(2,2)
+
+## probability to chose various channels 
+p_Z1a ~ dbeta(1,1) #dbeta(2,2)
+p_Z2a ~ dbeta(1,1) #dbeta(2,2)
+p_Z2b ~ dbeta(1,1) #dbeta(2,2)
+p_dodge  ~ dbeta(1,1) #dbeta(2,2)
+p_Z3b ~ dbeta(1,1) #dbeta(2,2)
+
+p_Z5b_Z4a ~ dbeta(1,1) #dbeta(2,2)
+p_Z5b_Z4ab  ~ dbeta(1,1) #dbeta(2,2)
+
+for (i in 1:n_fish){
+## We know that all fish survived and we know that all fish  
+## are in the main channel until they pass Rx1
+
+X_main_up[i] <- 1
+
+## For the first 3 receivers we only estimate the probability of detection since we know that they are in the main channel
+
+D_RP1[i] ~ dbern(X_main_up[i] * p_RP1)
+D_MM[i] ~ dbern(X_main_up[i] * p_MM)
+D_Rx1[i] ~ dbern(X_main_up[i] * p_Rx1)
+
+## Entering zone 1 
+## fish can be in 1 of 2 channels
+
+Z1_a[i] ~ dbern(X_main_up[i] * p_Z1a)
+Z1_b[i] <- 1-Z1_a[i]  ## if the fih is not in channel a it has to be in channel b
+
+## Fish can then be pinged at either R1a/b
+D_R1a[i] ~ dbern(Z1_a[i]*p_R1a)
+D_R1b[i] ~ dbern(Z1_b[i]*p_R1b)
+
+
+## Entering zone 2 - R2a / middle / Rx2b channel
+## Fish can be in 1 of 3 channels
+
+Z2_a[i] ~ dbern(Z1_a[i] * p_Z2a ) ## Fish can go towards the middle channel
+Z2_ab[i] <- 1 - (Z2_a[i]+Z2_b[i]) ## Fish can go towards the middle channel
+Z2_b[i] ~ dbern(Z1_b[i] * p_Z2b) ##
+
+## Fish can then be pinged at either R2a or Rx2b
+D_R2a[i] ~ dbern(Z2_a[i]*p_R2a)
+D_Rx2b[i] ~ dbern(Z2_b[i]*p_Rx2b)
+
+## Entering zone 3 - intermediate zone to account for cross channel in the middle channel 
+
+Z3_a[i] <- Z2_a[i]
+Z3_ab_dodge[i] ~ dbern(Z2_ab[i]*p_dodge) #Fish can go towards the middle channel
+Z3_ab_no_dodge[i] <- 1-(Z3_a[i]+ Z3_ab_dodge[i]+Z3_b[i] )
+Z3_b[i] <- Z2_b[i]
+
+## We need to add a second layer of the channel selection 
+D_Rx2a[i] ~ dbern(Z3_ab_no_dodge[i]*p_Rx2a)
+
+
+
+## Entering zone 4 - only checking for 2 channel status Rx2a or R2b channel
+## 
+
+Z4_b[i] ~ dbern(Z3_b[i] * p_Z3b)  ## the only way to be in the channel leading to receiver R2b is if the fish was in Z3_b  
+
+Z4_ab[i] <- 1- (Z4_b[i]+Z4_a[i] )
+
+Z4_a[i] <- Z3_a[i]  + Z3_ab_dodge[i]
+
+
+
+
+## Fish can then be pinged at  R2b 
+D_R2b[i] ~ dbern(Z4_b[i]*p_R2b)
+
+
+## Entering zone 5
+## Fish can be in 1 of 2 channels - R3a or R3b channels
+
+Z5_b[i] ~ dbern( Z4_a[i] * p_Z5b_Z4a +
+		 Z4_ab[i] * p_Z5b_Z4ab +  # Coming from middle (Rx2a) channel and going towards R3b
+		 Z4_b[i])  
+
+Z5_a[i] <- 1 -Z5_b[i] 
+
+## Fish can then be pinged at either R3a or R3b
+D_R3a[i] ~dbern(Z5_a[i]*p_R3a)
+D_R3b[i] ~dbern(Z5_b[i]*p_R3b)
+
+
+X_main_down[i] <- 1
+
+D_Rest[i] ~ dbern(X_main_down[i]* p_Rest)
+
+
+} #individual smolt loop END
+
+
+} 
