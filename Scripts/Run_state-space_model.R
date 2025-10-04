@@ -210,6 +210,10 @@ coord_sum <- data.frame(
   col_bg = c("lightskyblue","olivedrab3","hotpink1","olivedrab3","hotpink1","hotpink4","hotpink1","olivedrab3","hotpink1")
 )
 
+coord_sum$lab_txt <- sprintf("D[%s]", coord_sum$numb)
+
+
+
 coord_chan <- data.frame(
   ## Coordinates Channels 
   ## Z1a, Z1b, 
@@ -346,7 +350,7 @@ if(mode==2){ png(paste0("Figures/2022-individual_p/M_5_smolt_travel_history_chan
     points(coord_sum$x_coord[j],coord_sum$y_coord[j],pch=22, 
            bg = ifelse(plot_df[i,j+1]==0 , "grey75", "deepskyblue3"), #coord_sum$col_bg[j]),
            cex =3 )
-    text(coord_sum$x_text[j],coord_sum$y_text[j], labels=coord_sum$names_receivers[j],col="white",cex=1.3)
+    text(coord_sum$x_text[j],coord_sum$y_text[j], labels=parse(text=coord_sum$lab_txt[j]),col="white",cex=1.3)
   }
   ##plot fish ID
   text(1500,25,paste0("Smolt ID#: ",plot_df$smolt_ID[i]),col="white",cex=1.2)
@@ -357,7 +361,7 @@ if(mode==2){ png(paste0("Figures/2022-individual_p/M_5_smolt_travel_history_chan
     text(coord_chan$x[j],coord_chan$y[j],round(mean_channel[i,j],2)*100,cex=0.7,col="darkorange1")
   }
   
-  legend(x=40,y=670,
+  legend(x=40,y=170,
          legend=c("Receivers","Detected","Not detected"),
          pt.bg=c(NA,"deepskyblue3","grey75"),
          pch=c(NA,22,22),pt.cex=c(NA,1.5,1.5),

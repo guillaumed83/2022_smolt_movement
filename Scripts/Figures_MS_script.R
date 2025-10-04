@@ -17,6 +17,7 @@ library(grid)
 library(cowplot)
 library(gridGraphics)
 library(sjmisc)
+library(paletteer)
 
 ## Original Script written G.Dauphin in November 2024
 ## provided as supporting information for reproducibility purposes 
@@ -40,8 +41,8 @@ load("R_Data/data_fig2-3.Rdata")
 ##_________________________________________
 ### Figure 1 ####
 #### Generating panel with Map with zones  ####
-map_img  <-  readJPEG("R_Data/ReceiversArrays_29112024.jpg")
-channel_img <- readPNG("R_Data/Google_Earth_2022_channels.png")
+#map_img  <-  readJPEG("R_Data/ReceiversArrays_29112024.jpg")
+channel_img <- readPNG("R_Data/Google_Earth_2022_channels_scale.png")
 
 #### Coordinates receivers - upstream/downstream of islands coordinates guessed ####
 ## small map
@@ -50,13 +51,16 @@ coord_sum <- data.frame(
   # Receivers numbering manuscript
   number_rec = c(3,4,5,6,7,8,9,10,11),
   
-  x_coord = c(130,412,548,1122,1254,1278,1443,1552,1550),
+  x_coord = c(130,412,548,1122,1254,1278,1440,1552,1550),
   y_coord = 687 - c(424,255,412,260,490,451,518,393,486),
   
-  x_text = c(130,412,548,1122,1254,1338,1443,1552,1550),
+  x_text = c(130,412,548,1122,1254,1338,1440,1552,1550),
   y_text = 687 - c(374,205,462,210,540,434,568,343,536),
   col_bg = c("lightskyblue","olivedrab3","hotpink1","olivedrab3","hotpink1","hotpink4","hotpink1","olivedrab3","hotpink1")
 )
+
+coord_sum$lab_txt <- sprintf("D[%s]", coord_sum$numb)
+
 
 ## Coordinates zones - a fish can only be in one of the channels in  a given zone
 zone_col <-c("grey90","grey10","grey90","grey10","grey90")
@@ -112,20 +116,24 @@ coord_chan <- data.frame(
   ## Z4a, Z4ab, z4b, 
   ## Z5a, Z5b
   x = c(320,320,
-        1080,1125 ,1138, #
-        1270,1282,1254,1300,
-        
-        1392,1373,1405,  #
-        1514,1515),
+        1070,1125 ,1138, #
+        1270,1282,1230,1300,
+        1392,1373,1395,  #
+        1504,1505),
   
   y = 687 - c(294,428,
               255,382,457,   #
-              317,400,440,491,
-              
+              317,400,435,491,
               400,477,518, #
               399,484),
-  numb = c("1,1","1.2","2,1","2,2","2,3","3,1","3,2","3,3","3,4","4,1","4,2","4,3","5,1","5,2")
+  numb = c("1,1","1,2",
+           "2,1","2,2","2,3",
+           "3,1","3,2","3,3","3,4",
+           "4,1","4,2","4,3",
+           "5,1","5,2")
 )
+#coord_chan$lab_txt <- sprintf("X[%s]", coord_chan$numb)
+
 
 coord_path_1 <-data.frame(
   x=c(41,181,417,658,875,1043,1253,1394,1450,1550,1660),
@@ -208,6 +216,7 @@ RST_rev_png <- readPNG("R_data/smolt_wheel_rev.png")
 source("Scripts/Network.R")
 ##_________________________________________
 
+
 graph_plot2 <- graph_plot +
   annotation_raster(RST_rev_png , ymin = yy+0.8,ymax= yy+0.9565,xmin = 2.3,xmax = 2.6) +
   annotation_raster(RST_rev_png , ymin = yy-1.2565,ymax= yy-1.1,xmin = 4.3,xmax = 4.6) 
@@ -247,19 +256,29 @@ for( j in unique(temp_path$I_path)){
   temp_path2 <- temp_path %>% filter(I_path==j)
   points(temp_path2$x,temp_path2$y,type="l",col="tomato1",lty=2,lwd=4)
 }
+
+
+
 ## Plot the receivers
 for (j in 1:9){
   points(coord_sum$x_coord[j],coord_sum$y_coord[j],pch=22, 
          bg = "white",
-         cex=3)
-  text(coord_sum$x_coord[j],coord_sum$y_coord[j], labels=coord_sum$number_rec[j],col="black",cex=1)
+         cex=4)
+  text(coord_sum$x_coord[j],coord_sum$y_coord[j], labels=parse(text=coord_sum$lab_txt[j]),col="black",cex=1)
 }
+
+
+## clean printing of expressions
+ij <- strsplit(coord_chan$numb, ",", fixed = TRUE)
+lab_expr <- lapply(ij, function(p) bquote(X[.(p[1]) * "," * .(p[2])]))
+lab_expr <- as.expression(lab_expr)
+
 
 ## plot the channel location
 for (j in 1:length(coord_chan$x)){
   points(coord_chan$x[j],coord_chan$y[j],pch=21, 
-         bg = "khaki1",col=NA, cex =4 )
-  text(coord_chan$x[j],coord_chan$y[j], labels=coord_chan$numb[j],col="black",cex=1)
+         bg = "khaki1",col=NA, cex =5 )
+  text(coord_chan$x[j],coord_chan$y[j], labels=lab_expr[[j]],col="black",cex=1)
 }
 
 ## Add the zone name
@@ -284,6 +303,31 @@ vps <- viewport(width=unit(0.8, "npc"),height = unit(0.55, "npc"),y=0.25,x=0.55,
 #pushViewport(vps$figure) ##   I am in the space of the network plot
 # vp1 <-plotViewport(c(2,1,1,1)) ## create new vp with margins, you play with thess values 
 #print(graph_plot,vp = vps1) 
+
+igraph_rec_coord <- data.frame(
+  x=c(0,
+      1,1,
+      2,2,
+      3,
+      4,
+      5,5),
+  y=c(yy-0.2,
+    yy+0.8,yy-1.20,
+    yy+0.8,yy-1.20,
+    yy-0.5,
+    yy-1.2,
+    yy+0.3,yy-1.20)
+)
+igraph_rec_coord$lab_txt <- sprintf("D[%s]", coord_sum$numb)
+
+
+graph_plot2<- graph_plot2+
+  geom_point(data=igraph_rec_coord,aes(x=x,y=y),size=14,shape=22)+
+  geom_text(data = igraph_rec_coord,
+            aes(x = x, y = y, label = lab_txt),
+            parse = TRUE, vjust = 0.5,size=6)
+  
+
 
 print(graph_plot2 ,vp = vps) 
 #text(0.045,1.09,"B",col="black",cex=4 )
@@ -393,7 +437,7 @@ if(i==2){
 }
 axis(1,at=c(x_release,x_Rx1,x_R,x_HoT,x_inner,x_outer,x_sobi),las=1,
      #labels=rep("",7))
-     labels = c("Release site","Rx1","R3a/R3b","HoT","Inner Bay", "Outer Bay", "SoBI"))
+     labels = c("Release site",expression(D[3]),expression(D[10:11]),expression(D[12]*" / HoT"),"Inner Bay", "Outer Bay", "SoBI"))
 
 mtext(at=c(5.5,12.5,17.5,23.5,31,42.5),
       side=rep(1,6),
@@ -609,11 +653,23 @@ AF <- approxfun(all_tide$Date_Time,all_tide$predictions.m.)
 ## we plot the alternance day/night and we add the tide cycle (using water level as a proxy)
 ## and the time of entry and exit of each individual
 
-png("Figures/tide_sun_smolts.png",height=1200,width=1800,pointsize=20)
+#png("Figures/tide_sun_smolts.png",height=1200,width=1800,pointsize=20)
+png("Figures/tide_sun_smolts_split.png",height=2400,width=1800,pointsize=20)
+
+
+
+pal <- paletteer_d("PNWColors::Bay")[3:5]
+
+
 
 par(mar=c(5,5.5,2,2))
 
 all_tide_sub <- all_tide %>% filter( between(Date_Time, as.Date("2022-05-25"), as.Date("2022-06-05"))) 
+
+
+par(mfrow=c(2,1))
+
+all_tide_sub <- all_tide %>% filter( between(Date_Time, as.Date("2022-05-25"), as.Date("2022-05-29"))) 
 
 plot(all_tide_sub$Date_Time,all_tide_sub$predictions.m.,type="l",
      xlab = "Date", ylab="Water Height (m)",cex.lab=1.3)
@@ -630,20 +686,58 @@ points(all_tide$Date_Time,all_tide$predictions.m.,type="l",col="royalblue3",lwd=
 
 for (i in 1:21){
   points(time_in_channel$min_time_Rx1[i], AF(time_in_channel$min_time_Rx1[i]),
-         col=ifelse(time_in_channel$tot_time[i]<100,"green",
-                    ifelse(time_in_channel$tot_time[i]<500,"orange","red")),pch=15)
+         col=ifelse(time_in_channel$tot_time[i]<100,pal[1],
+                    ifelse(time_in_channel$tot_time[i]<500,pal[2],pal[3])),pch=15)
   
   points(max(c(time_in_channel$max_time_R3a[i],time_in_channel$max_time_R3b[i]),na.rm=T), AF(time_in_channel$min_time_Rx1[i]),
-         col=ifelse(time_in_channel$tot_time[i]<100,"green",
-                    ifelse(time_in_channel$tot_time[i]<500,"orange","red")),pch=15)
+         col=ifelse(time_in_channel$tot_time[i]<100,pal[1],
+                    ifelse(time_in_channel$tot_time[i]<500,pal[2],pal[3])),pch=15)
   
   segments(time_in_channel$min_time_Rx1[i],AF(time_in_channel$min_time_Rx1[i]),
            max(c(time_in_channel$max_time_R3a[i],time_in_channel$max_time_R3b[i]),na.rm = T), AF(time_in_channel$min_time_Rx1[i]),
-           col=ifelse(time_in_channel$tot_time[i]<100,"green",
-                      ifelse(time_in_channel$tot_time[i]<480,"orange","red")))
+           col=ifelse(time_in_channel$tot_time[i]<100,pal[1],
+                      ifelse(time_in_channel$tot_time[i]<480,pal[2],pal[3])))
   text(time_in_channel$min_time_Rx1[i]- 13000, AF(time_in_channel$min_time_Rx1[i])+0.02,
        time_in_channel$Tags_smolts[i])
 }
+
+all_tide_sub <- all_tide %>% filter( between(Date_Time, as.Date("2022-05-30"), as.Date("2022-06-05"))) 
+
+plot(all_tide_sub$Date_Time,all_tide_sub$predictions.m.,type="l",
+     xlab = "Date", ylab="Water Height (m)",cex.lab=1.3)
+
+# subset May/june sunrise data
+dat_sun_sub <- dat_sun %>% filter(between(Sunrise_POSIX, as.Date("2022-05-01"), as.Date("2022-07-01")))
+
+polygon(x=c(dat_sun_sub$Nautical_twilight_start_POSIX[1],dat_sun_sub$Nautical_twilight_end_POSIX[61],dat_sun_sub$Nautical_twilight_end_POSIX[61],dat_sun_sub$Nautical_twilight_start_POSIX[1]),y=c(0,0,4,4),col="grey75")
+for(i in 1:61){
+  polygon(x=c(dat_sun_sub$Sunrise_POSIX[i],dat_sun_sub$Sunset_POSIX[i],dat_sun_sub$Sunset_POSIX[i],dat_sun_sub$Sunrise_POSIX[i]),y=c(0,0,4,4),col="grey95",border=NA)
+  polygon(x=c(dat_sun_sub$Nautical_twilight_end_POSIX[i],dat_sun_sub$Nautical_twilight_start_POSIX[i+1],dat_sun_sub$Nautical_twilight_start_POSIX[i+1],dat_sun_sub$Nautical_twilight_end_POSIX[i]),y=c(0,0,4,4),col="grey55",border=NA)
+}
+points(all_tide$Date_Time,all_tide$predictions.m.,type="l",col="royalblue3",lwd=3)
+
+
+
+for (i in 1:21){
+  points(time_in_channel$min_time_Rx1[i], AF(time_in_channel$min_time_Rx1[i]),
+         col=ifelse(time_in_channel$tot_time[i]<100,pal[1],
+                    ifelse(time_in_channel$tot_time[i]<500,pal[2],pal[3])),pch=15)
+  
+  points(max(c(time_in_channel$max_time_R3a[i],time_in_channel$max_time_R3b[i]),na.rm=T), AF(time_in_channel$min_time_Rx1[i]),
+         col=ifelse(time_in_channel$tot_time[i]<100,pal[1],
+                    ifelse(time_in_channel$tot_time[i]<500,pal[2],pal[3])),pch=15)
+  
+  segments(time_in_channel$min_time_Rx1[i],AF(time_in_channel$min_time_Rx1[i]),
+           max(c(time_in_channel$max_time_R3a[i],time_in_channel$max_time_R3b[i]),na.rm = T), AF(time_in_channel$min_time_Rx1[i]),
+           col=ifelse(time_in_channel$tot_time[i]<100,pal[1],
+                      ifelse(time_in_channel$tot_time[i]<480,pal[2],pal[3])))
+  text(time_in_channel$min_time_Rx1[i]- 13000, AF(time_in_channel$min_time_Rx1[i])+0.02,
+       time_in_channel$Tags_smolts[i])
+}
+
+
+
+
 
 pos <-legend("topright", 
              pch = c(15,15,15,NA),
@@ -652,25 +746,30 @@ pos <-legend("topright",
              lwd=c(NA,NA,NA,2,NA,NA,NA,NA),
              pt.cex = c(2,2,2,1,NA,NA,NA,NA),
              legend=c("Day (sunrise-sunset)","Nautical Twilight (start-end)","Night","Water height",
-                      "Time spent between Rx1 and R3a/b",
+                      expression("Time spent between "* D[3] *" and " * D[10:11]),
                       "<100 min", "between 100 min and 8 hours", ">= 8 hours"),
              box.lwd = 0,box.col = "grey45",bg = "white",cex=1.2)
 
 ## Being cute and creating a legend that matches the segments for duration
-points(x=rep(pos$text$x, times=2) - c(rep(35000,8),rep(10000,8)), 
+points(x=rep(pos$text$x, times=2) - c(rep(20000,8),rep(10000,8)), 
        y=rep(pos$text$y, times=2), 
        cex=1.3,
-       pch=rep(c(NA,NA,NA,NA,NA,15,15,15), times=2), col=rep(c(NA,NA,NA,NA,NA,"green","orange","red"), times=2))
+       pch=rep(c(NA,NA,NA,NA,NA,15,15,15), times=2), col=rep(c(NA,NA,NA,NA,NA,pal[1],pal[2],pal[3]), times=2))
 
-segments(x0=pos$text$x[6:8]-35000,
+segments(x0=pos$text$x[6:8]-20000,
          y0=pos$text$y[6:8],
          x1=pos$text$x[6:8]-10000,
          y1=pos$text$y[6:8],
-         col=c("green","orange","red")
+         col=c(pal[1],pal[2],pal[3])
 )
 box()
 dev.off()
 ##_________________________________________
+
+
+
+
+
 
 ##_________________________________________
 ### Figure 4-5 ####
@@ -700,7 +799,15 @@ p_detect_sum <- rbind(p_detect_sum,
 p_detect_sum$X <- factor(p_detect_sum$X,
                                 levels = c("p_RP1","p_MM","p_Rx1","p_R1a","p_R1b","p_R2a","p_Rx2b","p_Rx2a","p_R2b","p_R3a","p_R3b","p_Rest","Prior"))
 
-names_rec <-c("RP1","MM","Rx1","R1a","R1b","R2a","Rx2b","Rx2a","R2b","R3a","R3b","Rest","Prior")
+#names_rec <-c("RP1","MM","Rx1","R1a","R1b","R2a","Rx2b","Rx2a","R2b","R3a","R3b","Rest","Prior")
+
+
+names_rec_expr <- c(
+  lapply(1:11, function(i) bquote(D[.(i)])),
+  expression(D[12] * " / HoT"),
+  expression("Prior")
+)
+
 col_p_det <- c(rep("black",12),"red")
 names(col_p_det) <- levels(p_detect_sum$X)
 
@@ -729,7 +836,7 @@ plot_p_detect <- ggplot(p_detect_sum,aes(x=X,y=X50.,col=X))+
   xlab("Receivers")+
   ylab("")+
   scale_y_continuous(limits = c(0,1), expand = c(0, 0)) +
-  scale_x_discrete(labels=names_rec ,expand=c(0,0.4))+
+  scale_x_discrete(labels=names_rec_expr ,expand=c(0,0.4))+
   scale_colour_manual(name = "grp",values =col_p_det,guide="none")+
   theme_bw()+
   theme( panel.grid.major.x = element_blank()
