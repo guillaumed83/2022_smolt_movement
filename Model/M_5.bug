@@ -5,17 +5,38 @@ model{
 ## model channel selection and detection probability at the different receivers
 ## in the restigouche downstream island complex with 45 fish marked in 2022
 ##
-## 
-##
 ## For notation's sake the island complex is divided in 5 zones 
 ## and the probabilities to chose one specific channel are labelled Zx a/b/ab 
 ## Zx corresponds to the zone in which the choice occur and the letter indicates the direction
 ## a = north , b = south ,ab = middle
 ## a map with detailed location of channels , receivers and potential path choices is available 
-
 ## D_xx is an observed binary variable, 1: the fish was detected at receiver xx, 0: the fish was not detected at receiver xx
 ## Zx_c is an unobserved binary variable, 1: the fish is in channel c of zone x, 0: the fish is not in channel c of zone x
-
+## 
+## MS equivalency tables
+## REceivers and Probabilities of detection
+##___________________________________________________
+## Rx1 = D[3] associated p detection p_Rx1 = p[3]   |
+## R1a = D[4] associated p detection p_R1a = p[4]   |
+## R1b = D[5] associated p detection p_R1b = p[5]   |
+## R2a = D[6] associated p detection p_R2a = p[6]   |
+## Rx2b = D[7] associated p detection p_Rx2b = p[7] |
+## Rx2a = D[8] associated p detection p_Rx2a = p[8] |
+## R2b = D[9] associated p detection p_R2b = p[9]   |
+## R3a = D[10] associated p detection p_R3a = p[10] |
+## R3b = D[11] associated p detection p_R3b = p[11] |
+##__________________________________________________|
+##
+## Transitions probabilities
+##_________________________
+## p_Z1a = pt[1,1]        |   
+## p_Z2a = pt[2,1]        |
+## p_Z2b = pt[2,3]        |
+## p_dodge = pt[3,2]      |
+## p_Z3b = pt [4,3]       |
+## p_Z5b_Z4a = pt[5,2a]   |
+## p_Z5b_Z4ab = pt[5,2b]  |
+##________________________|
 
 ## probability of detection of all receivers
 p_RP1 ~ dbeta(1,1) #dbeta(2,2)
