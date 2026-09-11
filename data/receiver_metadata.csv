@@ -1,0 +1,16 @@
+location_id,receiver_label,display_order,receiver_index,zone_id,channel_id,is_array,route_class,model_observation,detection_parameter
+RP1,RP1,1,1,NA,NA,FALSE,NA,D_RP1,p_RP1
+all_MM,MM1-2,2,2,NA,NA,TRUE,NA,D_MM,p_MM
+Rx1,Rx1,3,3,NA,NA,FALSE,NA,D_Rx1,p_Rx1
+R1a,R1a,4,4,1,1,FALSE,NA,D_R1a,p_R1a
+R1b,R1b,5,5,1,2,FALSE,NA,D_R1b,p_R1b
+R2a,R2a,6,6,2,1,FALSE,Moses,D_R2a,p_R2a
+Rx2b,Rx2b,7,7,2,3,FALSE,NA,D_Rx2b,p_Rx2b
+Rx2a,Rx2a,8,8,3,2,FALSE,Neither,D_Rx2a,p_Rx2a
+R2b,R2b,9,9,4,3,FALSE,Butters,D_R2b,p_R2b
+R3a,R3a,10,10,5,1,FALSE,NA,D_R3a,p_R3a
+R3b,R3b,11,11,5,2,FALSE,NA,D_R3b,p_R3b
+HoT,HoT,12,12,NA,NA,TRUE,NA,D_Rest,p_Rest
+Inner_Bay,Inner bay,13,NA,NA,NA,TRUE,NA,NA,NA
+Outer_Bay,Outer bay,14,NA,NA,NA,TRUE,NA,NA,NA
+all_SoBI,SoBI,15,NA,NA,NA,TRUE,NA,NA,NA

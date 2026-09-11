@@ -1,0 +1,53 @@
+model{
+p_RP1 ~ dbeta(1,1)
+p_MM ~ dbeta(1,1)
+p_Rx1 ~ dbeta(1,1)
+p_R1a ~ dbeta(1,1)
+p_R1b ~ dbeta(1,1)
+p_R2a ~ dbeta(1,1)
+p_Rx2b ~ dbeta(1,1)
+p_Rx2a ~ dbeta(1,1)
+p_R2b ~ dbeta(1,1)
+p_R3a ~ dbeta(1,1)
+p_R3b ~ dbeta(1,1)
+p_Rest ~ dbeta(1,1)
+p_Z1a ~ dbeta(1,1)
+p_Z2a ~ dbeta(1,1)
+p_Z2b ~ dbeta(1,1)
+p_dodge  ~ dbeta(1,1)
+p_Z3b ~ dbeta(1,1)
+p_Z5b_Z4a ~ dbeta(1,1)
+p_Z5b_Z4ab  ~ dbeta(1,1)
+for (i in 1:n_fish){
+X_main_up[i] <- 1
+D_RP1[i] ~ dbern(X_main_up[i] * p_RP1)
+D_MM[i] ~ dbern(X_main_up[i] * p_MM)
+D_Rx1[i] ~ dbern(X_main_up[i] * p_Rx1)
+Z1_a[i] ~ dbern(X_main_up[i] * p_Z1a)
+Z1_b[i] <- 1-Z1_a[i]
+D_R1a[i] ~ dbern(Z1_a[i]*p_R1a)
+D_R1b[i] ~ dbern(Z1_b[i]*p_R1b)
+Z2_a[i] ~ dbern(Z1_a[i] * p_Z2a )
+Z2_ab[i] <- 1 - (Z2_a[i]+Z2_b[i])
+Z2_b[i] ~ dbern(Z1_b[i] * p_Z2b)
+D_R2a[i] ~ dbern(Z2_a[i]*p_R2a)
+D_Rx2b[i] ~ dbern(Z2_b[i]*p_Rx2b)
+Z3_a[i] <- Z2_a[i]
+Z3_ab_dodge[i] ~ dbern(Z2_ab[i]*p_dodge)
+Z3_ab_no_dodge[i] <- 1-(Z3_a[i]+ Z3_ab_dodge[i]+Z3_b[i] )
+Z3_b[i] <- Z2_b[i]
+D_Rx2a[i] ~ dbern(Z3_ab_no_dodge[i]*p_Rx2a)
+Z4_b[i] ~ dbern(Z3_b[i] * p_Z3b)
+Z4_ab[i] <- 1- (Z4_b[i]+Z4_a[i] )
+Z4_a[i] <- Z3_a[i]  + Z3_ab_dodge[i]
+D_R2b[i] ~ dbern(Z4_b[i]*p_R2b)
+Z5_b[i] ~ dbern( Z4_a[i] * p_Z5b_Z4a +
+		 Z4_ab[i] * p_Z5b_Z4ab +
+		 Z4_b[i])
+Z5_a[i] <- 1 -Z5_b[i]
+D_R3a[i] ~dbern(Z5_a[i]*p_R3a)
+D_R3b[i] ~dbern(Z5_b[i]*p_R3b)
+X_main_down[i] <- 1
+D_Rest[i] ~ dbern(X_main_down[i]* p_Rest)
+}
+}

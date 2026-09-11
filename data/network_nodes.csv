@@ -1,0 +1,16 @@
+node_id,zone_id,channel_id,state_variable,x,y,receiver_label,display_order
+Z0,0,0,X_main_up,0,3,Rx1,1
+Z1_1,1,1,Z1_a,1,4,R1a,2
+Z1_2,1,2,Z1_b,1,2,R1b,3
+Z2_1,2,1,Z2_a,2,4,R2a,4
+Z2_2,2,2,Z2_ab,2,2.8,NA,5
+Z2_3,2,3,Z2_b,2,2,Rx2b,6
+Z3_1,3,1,Z3_a,3,4,NA,7
+Z3_2,3,2,Z3_ab_dodge,3,2.8,NA,8
+Z3_3,3,3,Z3_ab_no_dodge,3,2.3,Rx2a,9
+Z3_4,3,4,Z3_b,3,2,NA,10
+Z4_1,4,1,Z4_a,4,3.5,NA,11
+Z4_2,4,2,Z4_ab,4,2.3,NA,12
+Z4_3,4,3,Z4_b,4,2,R2b,13
+Z5_1,5,1,Z5_a,5,3.5,R3a,14
+Z5_2,5,2,Z5_b,5,2,R3b,15
