@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "Please cite the companion manuscript when using these analyses; publication metadata will be updated after publication."
+type: software
+title: "Restigouche smolt routes: reproducibility companion"
+authors:
+  - family-names: Dauphin
+    given-names: Guillaume J. R.
+  - family-names: Daniels
+    given-names: Jason M.
+  - family-names: Gillis
+    given-names: Carole-Anne
+abstract: "Curated inputs, models and reproducible outputs for Atlantic salmon smolt migration through an island network: implications for capture-based monitoring. Companion to the 2026 manuscript; publication and licensing decisions are pending."
+keywords:
+  - Atlantic salmon
+  - acoustic telemetry
+  - rotary screw traps
+  - state-space model
+  - reproducibility

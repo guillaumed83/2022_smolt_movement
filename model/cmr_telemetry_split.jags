@@ -1,0 +1,90 @@
+model{
+mu_theta_K ~ dnorm(0,0.01)
+mu_theta_U ~ dnorm(0,0.01)
+mu_theta_Ma ~ dnorm(0,0.01)
+mu_theta_Mo ~ dnorm(0,0.01)
+mu_theta_B ~ dnorm(0,0.01)
+sigma_theta_K ~ dunif(0,10)
+sigma_theta_U ~ dunif(0,10)
+sigma_theta_Ma ~ dunif(0,10)
+sigma_theta_Mo ~ dunif(0,10)
+sigma_theta_B ~ dunif(0,10)
+tau_theta_K <- pow(sigma_theta_K,-2)
+tau_theta_U <- pow(sigma_theta_U,-2)
+tau_theta_Ma <- pow(sigma_theta_Ma,-2)
+tau_theta_Mo <- pow(sigma_theta_Mo,-2)
+tau_theta_B <- pow(sigma_theta_B,-2)
+eta_alphaN ~ dunif(0.01,10000)
+p_travel_B <- 0.296
+p_travel_Mo <- 0.27
+for (t in 1:T){
+	for (i in 1:I_w[t,1]){
+		Nm_K[t] <- round(p_smolt_prod[t,1] * Nm_tot[t])
+		C_K[t] ~ dbin(theta_K[t],Nm_K[t])
+		L_theta_K[t] ~dnorm(mu_theta_K,tau_theta_K)
+		logit(theta_K[t]) <-  L_theta_K[t]
+		R_K[t] ~ dbin(theta_K[t],M_K[t])
+	}
+}
+for (t in 1:T){
+	for (i in 1:I_w[t,2]){
+		Nm_U[t] <- round(p_smolt_prod[t,2] * Nm_tot[t])
+		C_U[t] ~ dbin(theta_U[t],Nm_U[t])
+		L_theta_U[t] ~dnorm(mu_theta_U,tau_theta_U)
+		logit(theta_U[t]) <- L_theta_U[t]
+		R_U[t] ~ dbin(theta_U[t],M_U[t])
+	}
+	for (i in 1:(1-I_w[t,2])){
+		Nm_U[t] <- 0
+	}
+}
+for (t in 1:T){
+	for (i in 1:I_w[t,3]){
+		Nm_Ma[t] <- round(p_smolt_prod[t,3] * Nm_tot[t])
+		C_Ma[t] ~ dbin(theta_Ma[t],Nm_Ma[t])
+		L_theta_Ma[t] ~ dnorm(mu_theta_Ma,tau_theta_Ma)
+		logit(theta_Ma[t]) <- L_theta_Ma[t]
+		R_Ma[t] ~ dbin(theta_Ma[t],M_Ma[t])
+	}
+	for (i in 1:(1-I_w[t,3])){
+		Nm_Ma[t] <- 0
+	}
+}
+for (t in 1:T){
+		tot_M2[t] <- I_w[t,1] * (M_K[t] - M_K_mort[t]) +
+			  I_w[t,2] * (M_U[t] - M_U_mort[t]) +
+			  I_w[t,3] * (M_Ma[t] - M_Ma_mort[t]) +
+			  I_w[t,4] * (M_Mo[t] - M_Mo_mort[t]) +
+			  I_w[t,5] * (M_B[t] - M_B_mort[t])
+}
+for( t in 1:T){
+		for (k in 1:n_p_dir[t]){
+			p_smolt_prod[t,I_p[t,k]] <- delta[t,k] / sum( delta[t,1:n_p_dir[t]] )
+			delta[t,k] ~ dgamma(alpha[t,I_p[t,k]]*eta_alphaN,1)
+			}
+		Nm_rest[t] <- p_smolt_prod[t,4]* Nm_tot[t]
+		Nm_tot[t] ~ dlnorm(13.44616,1.57619 )
+}
+for (t in 1:T){
+	for (i in 1:I_w[t,4]){
+		for( m in 1:index_no_mark_B[t]){
+			C_B[t] ~ dbin(theta_B[t],round(Nm_tot[t]))
+			R_B[t] ~ dbin(theta_B[t],round(tot_M2[t]))
+		}
+		L_theta_B_cond[t] ~dnorm(mu_theta_B,tau_theta_B)
+		logit(theta_B_cond[t]) <- L_theta_B_cond[t]
+		theta_B[t] <- theta_B_cond[t]*p_travel_B
+	}
+}
+for (t in 1:T){
+	for (i in 1:I_w[t,5]){
+		for( m in 1:index_no_mark_Mo[t]){
+			C_Mo[t] ~ dbin(theta_Mo[t],round(Nm_tot[t]))
+			R_Mo[t] ~ dbin(theta_Mo[t],round(tot_M2[t]))
+		}
+		L_theta_Mo_cond[t] ~dnorm(mu_theta_Mo,tau_theta_Mo)
+		logit(theta_Mo_cond[t]) <- L_theta_Mo_cond[t]
+		theta_Mo[t] <- theta_Mo_cond[t]*p_travel_Mo
+	}
+}
+}

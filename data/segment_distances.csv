@@ -1,0 +1,7 @@
+segment_id,start_location,start_event,end_location,end_event,distance_km,figure_5_included
+release_Rx1,release,release,Rx1,first,101,TRUE
+network,Rx1,first,R3a;R3b,last,6.355,TRUE
+release_HoT,release,release,HoT,first,116.7,TRUE
+HoT_inner,HoT,last,Inner_Bay,first,27.8,FALSE
+HoT_outer,HoT,last,Outer_Bay,first,108.3,FALSE
+HoT_SoBI,HoT,last,all_SoBI,first,741.5,FALSE
